@@ -3,8 +3,8 @@ import type { TelemetrySnapshot } from "./types";
 export const simulatedSnapshot: TelemetrySnapshot = {
   driver: {
     id: "car-44",
-    name: "Leonardo Viana",
-    code: "LVI",
+    name: "Leonardo Gomes",
+    code: "LOG",
     team: "Apex Dynamics",
     carNumber: 44,
   },

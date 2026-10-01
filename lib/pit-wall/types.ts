@@ -90,3 +90,16 @@ export type HistoryPoint = {
   brakeTempC: number;
   lapTimeSeconds: number;
 };
+
+export type StrategyTone = "good" | "neutral" | "watch" | "critical";
+
+export type StrategyModel = {
+  lapsRemaining: number;
+  projectedFinishFuelKg: number;
+  tireLifeRemainingLaps: number;
+  pitWindow: "closed" | "open" | "late";
+  undercutRisk: number;
+  overcutRisk: number;
+  targetPaceDeltaSeconds: number;
+  tone: StrategyTone;
+};

@@ -23,6 +23,10 @@ export function createInitialSnapshot(): TelemetrySnapshot {
 }
 
 export function advanceSnapshot(snapshot: TelemetrySnapshot): TelemetrySnapshot {
+  if (snapshot.session.lap >= snapshot.session.totalLaps) {
+    return snapshot;
+  }
+
   const tick = snapshot.session.tick + 1;
   const completedSimLaps = Math.floor(tick / ticksPerLap);
   const lap = clamp(simulatedSnapshot.session.lap + completedSimLaps, 1, snapshot.session.totalLaps);

@@ -8,6 +8,7 @@ import {
 import type {
   HistoryPoint,
   MetricState,
+  StrategyModel,
   TelemetryMetric,
   TelemetrySnapshot,
   TireSegment,
@@ -35,6 +36,10 @@ function lowValueState(value: number, watch: number, critical: number): MetricSt
   }
 
   return "nominal";
+}
+
+function clampPercent(value: number) {
+  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
 export function getTelemetryMetrics(snapshot: TelemetrySnapshot): TelemetryMetric[] {
@@ -92,10 +97,10 @@ export function getTireSegments(snapshot: TelemetrySnapshot): TireSegment[] {
   const { wearPercent } = snapshot.tires;
 
   return [
-    { label: "FL", temperatureC: tiresC + 4, wearPercent: wearPercent + 3, state: "watch" },
-    { label: "FR", temperatureC: tiresC + 2, wearPercent: wearPercent + 1, state: "nominal" },
-    { label: "RL", temperatureC: tiresC - 3, wearPercent: wearPercent - 2, state: "nominal" },
-    { label: "RR", temperatureC: tiresC - 1, wearPercent, state: "nominal" },
+    { label: "FL", temperatureC: tiresC + 4, wearPercent: clampPercent(wearPercent + 3), state: "watch" },
+    { label: "FR", temperatureC: tiresC + 2, wearPercent: clampPercent(wearPercent + 1), state: "nominal" },
+    { label: "RL", temperatureC: tiresC - 3, wearPercent: clampPercent(wearPercent - 2), state: "nominal" },
+    { label: "RR", temperatureC: tiresC - 1, wearPercent: clampPercent(wearPercent), state: "nominal" },
   ];
 }
 
@@ -128,4 +133,55 @@ export function getStrategyCall(snapshot: TelemetrySnapshot) {
   }
 
   return "Keep target lap within +0.4s and protect rear tire phase until lap 24.";
+}
+
+export function getStrategyModel(snapshot: TelemetrySnapshot, history: HistoryPoint[]): StrategyModel {
+  const lapsRemaining = Math.max(0, snapshot.session.totalLaps - snapshot.session.lap);
+  const recentHistory = history.slice(-12);
+  const firstRecentPoint = recentHistory[0];
+  const lastRecentPoint = recentHistory.at(-1);
+  const elapsedLaps =
+    firstRecentPoint && lastRecentPoint
+      ? Math.max(1, lastRecentPoint.lap - firstRecentPoint.lap)
+      : 1;
+  const fuelBurnRate =
+    firstRecentPoint && lastRecentPoint
+      ? Math.max(0.1, (firstRecentPoint.fuelKg - lastRecentPoint.fuelKg) / elapsedLaps)
+      : snapshot.fuel.burnRateKgPerLap;
+  const wearRate =
+    firstRecentPoint && lastRecentPoint
+      ? Math.max(0.1, (lastRecentPoint.tireWearPercent - firstRecentPoint.tireWearPercent) / elapsedLaps)
+      : 2.4;
+  const tireLifeRemainingLaps = Math.max(
+    0,
+    Math.floor((72 - snapshot.tires.wearPercent) / wearRate),
+  );
+  const projectedFinishFuelKg = snapshot.fuel.remainingKg - fuelBurnRate * lapsRemaining;
+  const pitWindow =
+    snapshot.session.lap < 20 ? "closed" : snapshot.session.lap <= 24 ? "open" : "late";
+  const undercutRisk = Math.min(99, Math.max(8, 28 + (2.2 - Number(snapshot.gaps.ahead)) * 16));
+  const overcutRisk = Math.min(
+    99,
+    Math.max(12, 32 + (snapshot.tires.wearPercent - 45) * 1.6 + (pitWindow === "late" ? 18 : 0)),
+  );
+  const targetPaceDeltaSeconds = Number((parseLapTime(snapshot.pace.lastLap) - 82.4).toFixed(2));
+  const tone =
+    projectedFinishFuelKg < 0 || tireLifeRemainingLaps < 3
+      ? "critical"
+      : projectedFinishFuelKg < 2 || tireLifeRemainingLaps < 6 || pitWindow === "late"
+        ? "watch"
+        : pitWindow === "open"
+          ? "good"
+          : "neutral";
+
+  return {
+    lapsRemaining,
+    projectedFinishFuelKg,
+    tireLifeRemainingLaps,
+    pitWindow,
+    undercutRisk: Math.round(undercutRisk),
+    overcutRisk: Math.round(overcutRisk),
+    targetPaceDeltaSeconds,
+    tone,
+  };
 }

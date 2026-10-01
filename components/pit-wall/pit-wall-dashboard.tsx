@@ -5,6 +5,7 @@ import { createInitialEvents, getEventsForTransition } from "@/lib/pit-wall/even
 import { advanceSnapshot, createInitialSnapshot } from "@/lib/pit-wall/simulator";
 import {
   getHistoryPoints,
+  getStrategyModel,
   getStrategyCall,
   getTelemetryMetrics,
   getTireSegments,
@@ -94,6 +95,7 @@ export function PitWallDashboard({
   const metrics = getTelemetryMetrics(displaySnapshot);
   const tireSegments = getTireSegments(displaySnapshot);
   const historyPoints = getHistoryPoints(simulationState.history);
+  const strategyModel = getStrategyModel(displaySnapshot, historyPoints);
   const strategyCall = getStrategyCall(displaySnapshot);
 
   function resetSimulation() {
@@ -127,6 +129,7 @@ export function PitWallDashboard({
             history={historyPoints}
             snapshot={displaySnapshot}
             strategyCall={strategyCall}
+            strategyModel={strategyModel}
           />
         </aside>
       </section>
