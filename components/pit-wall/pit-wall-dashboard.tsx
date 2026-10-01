@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
+import { createInitialEvents, getEventsForTransition } from "@/lib/pit-wall/events";
 import { advanceSnapshot, createInitialSnapshot } from "@/lib/pit-wall/simulator";
-import { getTelemetryMetrics, getTireSegments } from "@/lib/pit-wall/selectors";
-import type { TelemetrySnapshot } from "@/lib/pit-wall/types";
+import {
+  getHistoryPoints,
+  getStrategyCall,
+  getTelemetryMetrics,
+  getTireSegments,
+} from "@/lib/pit-wall/selectors";
+import type { TelemetryEvent, TelemetrySnapshot } from "@/lib/pit-wall/types";
 import { CockpitHeader } from "./cockpit-header";
 import { DriverStatus } from "./driver-status";
 import { GapBoard } from "./gap-board";
@@ -11,12 +17,55 @@ import { SessionTimeline } from "./session-timeline";
 import { TelemetryGrid } from "./telemetry-grid";
 import { TireStrip } from "./tire-strip";
 
+type SimulationState = {
+  events: TelemetryEvent[];
+  history: TelemetrySnapshot[];
+  snapshot: TelemetrySnapshot;
+};
+
+type SimulationAction =
+  | { type: "reset"; snapshot: TelemetrySnapshot }
+  | { type: "tick" };
+
+function createSimulationState(snapshot: TelemetrySnapshot): SimulationState {
+  return {
+    events: createInitialEvents(snapshot),
+    history: [snapshot],
+    snapshot,
+  };
+}
+
+function simulationReducer(
+  state: SimulationState,
+  action: SimulationAction,
+): SimulationState {
+  if (action.type === "reset") {
+    return createSimulationState(action.snapshot);
+  }
+
+  const nextSnapshot = advanceSnapshot(state.snapshot);
+  const transitionEvents = getEventsForTransition(state.snapshot, nextSnapshot);
+
+  return {
+    snapshot: nextSnapshot,
+    history: [...state.history, nextSnapshot].slice(-36),
+    events:
+      transitionEvents.length > 0
+        ? [...transitionEvents, ...state.events].slice(0, 8)
+        : state.events,
+  };
+}
+
 export function PitWallDashboard({
   initialSnapshot,
 }: {
   initialSnapshot: TelemetrySnapshot;
 }) {
-  const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [simulationState, dispatchSimulation] = useReducer(
+    simulationReducer,
+    initialSnapshot,
+    createSimulationState,
+  );
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
@@ -25,7 +74,7 @@ export function PitWallDashboard({
     }
 
     const interval = window.setInterval(() => {
-      setSnapshot((currentSnapshot) => advanceSnapshot(currentSnapshot));
+      dispatchSimulation({ type: "tick" });
     }, 1000);
 
     return () => window.clearInterval(interval);
@@ -33,20 +82,24 @@ export function PitWallDashboard({
 
   const displaySnapshot = useMemo<TelemetrySnapshot>(
     () => ({
-      ...snapshot,
+      ...simulationState.snapshot,
       session: {
-        ...snapshot.session,
+        ...simulationState.snapshot.session,
         status: isPaused ? "paused" : "simulated",
       },
     }),
-    [isPaused, snapshot],
+    [isPaused, simulationState.snapshot],
   );
 
   const metrics = getTelemetryMetrics(displaySnapshot);
   const tireSegments = getTireSegments(displaySnapshot);
+  const historyPoints = getHistoryPoints(simulationState.history);
+  const strategyCall = getStrategyCall(displaySnapshot);
 
   function resetSimulation() {
-    setSnapshot(createInitialSnapshot());
+    const nextInitialSnapshot = createInitialSnapshot();
+
+    dispatchSimulation({ type: "reset", snapshot: nextInitialSnapshot });
     setIsPaused(false);
   }
 
@@ -69,7 +122,12 @@ export function PitWallDashboard({
 
         <aside className="flex min-h-0 flex-col gap-3">
           <GapBoard snapshot={displaySnapshot} />
-          <SessionTimeline snapshot={displaySnapshot} />
+          <SessionTimeline
+            events={simulationState.events}
+            history={historyPoints}
+            snapshot={displaySnapshot}
+            strategyCall={strategyCall}
+          />
         </aside>
       </section>
     </div>

@@ -87,16 +87,24 @@ body {
 }
 
 .tire-wear-fill,
-.session-progress-fill {
+.session-progress-fill,
+.history-bar {
   transform-origin: left center;
   transition: transform 180ms var(--ease-out);
+}
+
+.history-bar {
+  border-radius: 999px;
+  opacity: 0.86;
+  transition: opacity 180ms var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .control-button,
   .state-pill,
   .tire-wear-fill,
-  .session-progress-fill {
+  .session-progress-fill,
+  .history-bar {
     transition-duration: 1ms;
   }
 }

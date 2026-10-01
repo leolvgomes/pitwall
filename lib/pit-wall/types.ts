@@ -70,3 +70,23 @@ export type TireSegment = {
   wearPercent: number;
   state: MetricState;
 };
+
+export type TelemetryEventTone = "info" | "good" | "watch" | "critical";
+
+export type TelemetryEvent = {
+  id: string;
+  lap: number;
+  timestamp: string;
+  label: string;
+  detail: string;
+  tone: TelemetryEventTone;
+};
+
+export type HistoryPoint = {
+  tick: number;
+  lap: number;
+  fuelKg: number;
+  tireWearPercent: number;
+  brakeTempC: number;
+  lapTimeSeconds: number;
+};

@@ -34,3 +34,8 @@ export function formatLapTime(totalSeconds: number) {
 
   return `${minutes}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
 }
+
+export function parseLapTime(lapTime: string) {
+  const [minutes = "0", seconds = "0"] = lapTime.split(":");
+  return Number(minutes) * 60 + Number(seconds);
+}
