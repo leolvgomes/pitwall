@@ -52,8 +52,8 @@ export function TireStrip({
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[var(--amber)]"
-                style={{ width: `${segment.wearPercent}%` }}
+                className="tire-wear-fill h-full rounded-full bg-[var(--amber)]"
+                style={{ transform: `scaleX(${segment.wearPercent / 100})` }}
               />
             </div>
             <p className="mt-2 font-mono text-xs text-slate-300">{segment.wearPercent}% wear</p>

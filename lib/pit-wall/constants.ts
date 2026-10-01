@@ -14,6 +14,7 @@ export const simulatedSnapshot: TelemetrySnapshot = {
     totalLaps: 44,
     position: 3,
     stintLap: 7,
+    tick: 0,
     timestamp: "14:27:08",
     status: "simulated",
   },

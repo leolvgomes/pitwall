@@ -18,6 +18,7 @@ export type TelemetrySnapshot = {
     totalLaps: number;
     position: number;
     stintLap: number;
+    tick: number;
     timestamp: string;
     status: "simulated" | "live" | "paused";
   };

@@ -24,7 +24,10 @@ export function SessionTimeline({ snapshot }: { snapshot: TelemetrySnapshot }) {
       </div>
 
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full rounded-full bg-[var(--redline)]" style={{ width: `${progress}%` }} />
+        <div
+          className="session-progress-fill h-full rounded-full bg-[var(--redline)]"
+          style={{ transform: `scaleX(${progress / 100})` }}
+        />
       </div>
 
       <div className="mt-6 space-y-3">

@@ -49,3 +49,54 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+.control-button {
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.24);
+  color: var(--foreground);
+  min-height: 38px;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    background-color 160ms var(--ease-out);
+}
+
+.control-button:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .control-button:hover {
+    border-color: rgb(244 247 248 / 0.28);
+    background: rgb(244 247 248 / 0.06);
+  }
+}
+
+.state-pill {
+  transition:
+    color 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    background-color 180ms var(--ease-out);
+}
+
+.tire-wear-fill,
+.session-progress-fill {
+  transform-origin: left center;
+  transition: transform 180ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-button,
+  .state-pill,
+  .tire-wear-fill,
+  .session-progress-fill {
+    transition-duration: 1ms;
+  }
+}

@@ -32,7 +32,7 @@ export function MetricTile({ metric }: { metric: TelemetryMetric }) {
           </div>
         </div>
         <span
-          className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${stateStyles[metric.state]}`}
+          className={`state-pill rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${stateStyles[metric.state]}`}
         >
           {metric.state}
         </span>
